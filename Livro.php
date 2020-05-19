@@ -1,5 +1,5 @@
 <?php
-// instruções em https://github.com/edsonbin/in8/readme.md
+// instruções em https://github.com/edsonbin/in8/blob/master/readme.md
 
 $metodo=$_SERVER["REQUEST_METHOD"];
 
