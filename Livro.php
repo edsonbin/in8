@@ -1,9 +1,13 @@
 <?php
+// instruções em https://github.com/edsonbin/in8/readme.md
+
 $metodo=$_SERVER["REQUEST_METHOD"];
 
 $livros = new Livro();
 
+header('Content-Type: application/json');
 $retorno = call_user_func(strtolower($metodo),$livros);
+echo json_encode($retorno);
 
 unset($livros);
 
@@ -11,44 +15,47 @@ function get($livros) {
     if(!empty($_GET["id"]))
     {
         $retorno = $livros->get($_GET["id"]);
+
         if ($retorno === false) {
             http_response_code(404);
             die("Não encontrado");
         }else{
-            echo json_encode($retorno);
+            return $retorno;
         }
     }else{
         $registros = $livros->getList();
-        echo json_encode($registros);
+        return $registros;
     }
 }
 
 function post($livros) {
-    $retorno = $livros->post($_POST);
-    echo json_encode($retorno);
+    return $livros->post($_POST);
 }
 
 function put($livros) {
-    $retorno = $livros->put($_POST);
+    parse_str(file_get_contents("php://input"),$_VARS);
+    $retorno = $livros->put($_VARS);
     if ($retorno === false) {
         http_response_code(404);
-        die("Não encontrado");
+        return "Não encontrado";
     }else{
-        echo json_encode($retorno);
+        return $retorno;
     }
 }
 
 function delete($livros) {
-    $retorno = $livros->put($_POST);
+    parse_str(file_get_contents("php://input"),$_VARS);
+    $retorno = $livros->delete($_VARS);
     if ($retorno === false) {
         http_response_code(404);
-        die("Não encontrado");
+        return "Não encontrado";
     }else{
-        echo json_encode($retorno);
+        return $retorno;
     }
 }
 
 Class Livro {
+    // dados inciais para teste
     private $livros = [
         [
             'id'=>1
@@ -75,11 +82,12 @@ Class Livro {
     }
 
     private function find($id) {
-        return array_search(intval($id, array_column($this->livros,'id')));
+        return array_search(intval($id), array_column($this->livros,'id'));
     }
 
     public function get($id) {
         $indice = $this->find($id);
+
         if (!($indice === false)) {
             return $this->livros[$indice];
         }else {
@@ -103,25 +111,26 @@ Class Livro {
             if (isset($livro['titulo'])) {
                 $this->livros['titulo'] = $livro['titulo']; 
             }
-            if (isset($livro['titulo'])) {
-                $this->livros['autor'] = $livro['autor']; 
+            if (isset($livro['autor'])) {
+                $this->livros[$indice]['autor'] = $livro['autor']; 
             }
-            if (isset($livro['titulo'])) {
-                $this->livros['edicao'] = $livro['edicao']; 
+            if (isset($livro['edicao'])) {
+                $this->livros[$indice]['edicao'] = $livro['edicao']; 
             }
             return $this->livros[$indice];
         }else {
-            return $false;
+            return false;
         }
     }
 
-    public function delete($id) {
-        $indice = $this->find($id);
+    public function delete($livro) {
+        $indice = $this->find($livro['id']);
         if (!($indice === false)) {
-            unset($this->livros[$indice]);
+            unset($this->livros[$indice]); 
+            $this->livros = array_values($this->livros);
             return true;
         }else {
-            return $false;
+            return false;
         }
     }
 
